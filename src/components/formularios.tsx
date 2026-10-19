@@ -66,6 +66,8 @@ export type ProductoEditable = {
   nombre: string;
   precio: number;
   stock: number;
+  agregado_rapido: boolean;
+  unidades_por_paquete: number;
 };
 
 export function FormularioProducto({ producto }: { producto?: ProductoEditable }) {
@@ -113,6 +115,28 @@ export function FormularioProducto({ producto }: { producto?: ProductoEditable }
         defaultValue={producto?.stock ?? 0}
         required
       />
+      <div className="grid gap-4 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-900/5 sm:col-span-2">
+        <label className="flex items-center gap-3 text-sm font-semibold text-slate-800">
+          <input
+            type="checkbox"
+            name="agregado_rapido"
+            defaultChecked={producto?.agregado_rapido ?? false}
+            className="h-5 w-5 accent-teal-700"
+          />
+          Habilitar agregado rapido
+        </label>
+        <Campo
+          id={`${uid}-unidades`}
+          etiqueta="Unidades por paquete"
+          name="unidades_por_paquete"
+          type="number"
+          min="1"
+          max="1000"
+          step="1"
+          defaultValue={producto?.unidades_por_paquete ?? 12}
+          ayuda="Cuanto suma cada pulsacion del boton de agregado rapido."
+        />
+      </div>
       <div className="sm:col-span-2">
         <CampoArchivo
           id={`${uid}-imagen`}

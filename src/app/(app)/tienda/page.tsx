@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
+import { agregarPaquete } from "@/app/acciones";
 import { FormularioCompra, FormularioProducto } from "@/components/formularios";
-import { Aviso, Encabezado, Insignia, Tarjeta } from "@/components/ui";
+import { Aviso, Boton, Encabezado, Insignia, Tarjeta } from "@/components/ui";
 import { db } from "@/lib/db";
 import { obtenerSesion } from "@/lib/sesion";
 import { pesos } from "@/lib/formato";
@@ -11,6 +12,8 @@ type Producto = {
   precio: number;
   stock: number;
   imagen_url: string | null;
+  agregado_rapido: boolean;
+  unidades_por_paquete: number;
 };
 
 export default async function PaginaTienda() {
@@ -19,7 +22,7 @@ export default async function PaginaTienda() {
 
   let consulta = db()
     .from("productos")
-    .select("id, nombre, precio, stock, imagen_url")
+    .select("id, nombre, precio, stock, imagen_url, agregado_rapido, unidades_por_paquete")
     .order("creado_en", { ascending: false });
 
   // Regla de negocio: el comprador solo ve productos con stock. Al llegar a 0 desaparecen.
@@ -66,14 +69,26 @@ export default async function PaginaTienda() {
                     )}
                   </div>
                 </div>
-                <details className="group rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-900/5">
-                  <summary className="cursor-pointer list-none text-sm font-bold text-slate-800">
-                    Editar producto
-                  </summary>
-                  <div className="mt-5">
-                    <FormularioProducto producto={producto} />
+                <div className="grid gap-4">
+                  <div className="flex flex-wrap items-center gap-3">
+                    {producto.agregado_rapido && (
+                      <form action={agregarPaquete}>
+                        <input type="hidden" name="producto" value={producto.id} />
+                        <Boton tono="exito">
+                          Agregado rapido +{producto.unidades_por_paquete}
+                        </Boton>
+                      </form>
+                    )}
+                    <details className="group rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-900/5">
+                      <summary className="flex h-11 cursor-pointer list-none items-center rounded-2xl bg-slate-100 px-5 text-sm font-bold text-slate-800 transition hover:bg-slate-200">
+                        Editar producto
+                      </summary>
+                      <div className="mt-5">
+                        <FormularioProducto producto={producto} />
+                      </div>
+                    </details>
                   </div>
-                </details>
+                </div>
               </Tarjeta>
             ))}
           </div>

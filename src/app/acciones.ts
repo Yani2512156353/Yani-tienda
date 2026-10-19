@@ -143,10 +143,18 @@ export async function guardarProducto(_prev: Estado, formData: FormData): Promis
   if (!Number.isFinite(precio) || precio <= 0) return { error: "El precio debe ser mayor que cero" };
   if (!Number.isInteger(stock) || stock < 0) return { error: "El stock debe ser un numero entero, desde 0" };
 
+  const agregadoRapido = formData.get("agregado_rapido") === "on";
+  const unidades = Number(formData.get("unidades_por_paquete") ?? 12);
+  if (!Number.isInteger(unidades) || unidades < 1 || unidades > 1000) {
+    return { error: "Las unidades por paquete deben ser un entero entre 1 y 1000" };
+  }
+
   const datos: Record<string, unknown> = {
     nombre,
     precio,
     stock,
+    agregado_rapido: agregadoRapido,
+    unidades_por_paquete: unidades,
     actualizado_en: new Date().toISOString(),
   };
 
@@ -172,6 +180,17 @@ export async function guardarProducto(_prev: Estado, formData: FormData): Promis
 
   revalidatePath("/tienda");
   return { ok: true };
+}
+
+// Agregado rapido (solo admin): suma un paquete completo al stock del producto.
+export async function agregarPaquete(formData: FormData): Promise<void> {
+  await exigirSesion("admin");
+
+  const producto = String(formData.get("producto") ?? "");
+  const { error } = await db().rpc("agregar_paquete", { p_producto: producto });
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/tienda");
 }
 
 // ---------------------------------------------------------------------
