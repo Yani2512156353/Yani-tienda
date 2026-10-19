@@ -1,0 +1,17 @@
+# dependencias y builds
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# secretos: nunca se suben
+.env
+.env.*
+!.env.example
+
+# Vercel local
+.vercel/
+
+# llaves y configuracion SSH: nunca dentro del proyecto
+.ssh/
