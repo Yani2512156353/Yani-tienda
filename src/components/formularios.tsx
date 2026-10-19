@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useId, useRef } from "react";
 import {
   avisarPago,
+  cambiarClave,
   comprarProducto,
   crearUsuario,
   guardarProducto,
@@ -191,6 +192,38 @@ export function FormularioPago() {
       {estado?.error && <Aviso tono="error">{estado.error}</Aviso>}
       <Boton tono="exito" pendiente={pendiente} className="w-full">
         Avisar de pago
+      </Boton>
+    </form>
+  );
+}
+
+export function FormularioClave({ obligatorio }: { obligatorio: boolean }) {
+  const [estado, accion, pendiente] = useActionState(cambiarClave, undefined as Estado);
+  return (
+    <form action={accion} className="grid gap-5">
+      <Campo
+        etiqueta="Clave nueva"
+        name="nueva"
+        type="password"
+        inputMode="text"
+        autoComplete="new-password"
+        minLength={4}
+        maxLength={12}
+        ayuda="Entre 4 y 12 caracteres, sin espacios."
+        required
+      />
+      <Campo
+        etiqueta="Repite la clave nueva"
+        name="repetir"
+        type="password"
+        autoComplete="new-password"
+        minLength={4}
+        maxLength={12}
+        required
+      />
+      {estado?.error && <Aviso tono="error">{estado.error}</Aviso>}
+      <Boton tono="exito" pendiente={pendiente} className="w-full">
+        {obligatorio ? "Guardar mi clave" : "Cambiar clave"}
       </Boton>
     </form>
   );

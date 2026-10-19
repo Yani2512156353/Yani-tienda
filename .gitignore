@@ -15,3 +15,6 @@ next-env.d.ts
 
 # llaves y configuracion SSH: nunca dentro del proyecto
 .ssh/
+
+# base de personal: datos sensibles, nunca al repo
+DB_PASAR/

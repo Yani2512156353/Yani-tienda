@@ -6,6 +6,8 @@ import { obtenerSesion } from "@/lib/sesion";
 export default async function LayoutApp({ children }: { children: React.ReactNode }) {
   const sesion = await obtenerSesion();
   if (!sesion) redirect("/");
+  // Con la clave inicial, solo puede cambiarla antes de usar la tienda.
+  if (sesion.cambiar) redirect("/clave-nueva");
 
   return (
     <div className="min-h-[100dvh]">

@@ -13,6 +13,8 @@ export type Sesion = {
   uid: string;
   rol: Rol;
   nombre: string;
+  // true mientras la persona no cambie su clave inicial.
+  cambiar: boolean;
   exp: number;
 };
 

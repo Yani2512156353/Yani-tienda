@@ -24,6 +24,8 @@ const MAX_BYTES = 5 * 1024 * 1024;
 async function exigirSesion(rol?: Sesion["rol"]): Promise<Sesion> {
   const sesion = await obtenerSesion();
   if (!sesion) redirect("/");
+  // Mientras tenga la clave inicial, solo puede cambiarla.
+  if (sesion.cambiar) redirect("/clave-nueva");
   if (rol && sesion.rol !== rol) throw new Error("No tienes permiso para esta accion");
   return sesion;
 }
@@ -79,7 +81,7 @@ export async function iniciarSesionAccion(_prev: Estado, formData: FormData): Pr
 
   const { data: usuario, error } = await db()
     .from("usuarios")
-    .select("id, nombre, rol, clave_hash")
+    .select("id, nombre, rol, clave_hash, debe_cambiar_clave")
     .eq("nombre_clave", claveDeNombre(nombre))
     .maybeSingle();
 
@@ -91,7 +93,33 @@ export async function iniciarSesionAccion(_prev: Estado, formData: FormData): Pr
     return { error: "Nombre o clave incorrectos" };
   }
 
-  await iniciarSesion({ uid: usuario.id, rol: usuario.rol, nombre: usuario.nombre });
+  const cambiar = Boolean(usuario.debe_cambiar_clave);
+  await iniciarSesion({ uid: usuario.id, rol: usuario.rol, nombre: usuario.nombre, cambiar });
+  redirect(cambiar ? "/clave-nueva" : "/tienda");
+}
+
+// Cambio de clave: el de primer ingreso y el voluntario desde el menu.
+export async function cambiarClave(_prev: Estado, formData: FormData): Promise<Estado> {
+  const sesion = await obtenerSesion();
+  if (!sesion) redirect("/");
+
+  const nueva = String(formData.get("nueva") ?? "");
+  const repetir = String(formData.get("repetir") ?? "");
+
+  if (nueva.length < 4 || nueva.length > 12) return { error: "La clave debe tener entre 4 y 12 caracteres" };
+  if (/\s/.test(nueva)) return { error: "La clave no puede tener espacios" };
+  if (nueva === CLAVE_INICIAL) return { error: "Elige una clave distinta a la inicial" };
+  if (nueva !== repetir) return { error: "Las dos claves no coinciden" };
+
+  const hash = await bcrypt.hash(nueva, 10);
+  const { error } = await db()
+    .from("usuarios")
+    .update({ clave_hash: hash, debe_cambiar_clave: false })
+    .eq("id", sesion.uid);
+  if (error) return { error: `No se pudo guardar la clave. Supabase dice: ${error.message}` };
+
+  // Se reemite la sesion sin el aviso de cambio pendiente.
+  await iniciarSesion({ uid: sesion.uid, rol: sesion.rol, nombre: sesion.nombre, cambiar: false });
   redirect("/tienda");
 }
 
