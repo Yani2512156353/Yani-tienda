@@ -66,7 +66,8 @@ export async function crearUsuario(_prev: Estado, formData: FormData): Promise<E
 
   if (error) {
     if (error.code === "23505") return { error: "Ese nombre ya existe, usa otro o inicia sesion" };
-    return { error: "No se pudo crear el usuario, intenta de nuevo" };
+    // Se muestra el error real de Supabase para diagnosticar la configuracion.
+    return { error: `No se pudo crear el usuario. Supabase dice: ${error.message}` };
   }
   return { ok: true };
 }
@@ -76,11 +77,14 @@ export async function iniciarSesionAccion(_prev: Estado, formData: FormData): Pr
   const clave = String(formData.get("clave") ?? "");
   if (!nombre || !clave) return { error: "Escribe tu nombre y tu clave" };
 
-  const { data: usuario } = await db()
+  const { data: usuario, error } = await db()
     .from("usuarios")
     .select("id, nombre, rol, clave_hash")
     .eq("nombre_clave", claveDeNombre(nombre))
     .maybeSingle();
+
+  // Un error de consulta no es una clave incorrecta: se muestra para diagnosticar la conexion.
+  if (error) return { error: `No se pudo consultar la base. Supabase dice: ${error.message}` };
 
   // Mismo mensaje si no existe o si la clave falla: no revelamos que nombres existen.
   if (!usuario || !(await bcrypt.compare(clave, usuario.clave_hash))) {
