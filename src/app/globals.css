@@ -1,15 +1,41 @@
 @import "tailwindcss";
 
 /*
-  Sistema visual de la tienda
-  - Paleta: fondo frio, tinta grafito (#1b2534), acento verde azulado (teal-700).
-    Rosa = debe, ambar = pendiente, teal = al dia. Un solo acento para la marca.
+  Sistema visual de la tienda (paleta tomada de LUIGYMART)
+  - Tinta verde oscura (slate-900 = #16382d), verde de marca (teal-700 = #087847),
+    naranja de accion (naranja-500 = #ff6816).
+    Rosa = debe, ambar = pendiente, teal/verde = al dia.
   - Radios fijos: tarjetas 28px, controles 16px, chips completos.
-  - Tema claro fijo para toda la app (no se invierte por seccion).
+  - Modo claro por defecto. El modo oscuro cambia solo estos tokens (html.dark, abajo).
 */
 
 @theme {
   --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+
+  /* Grises con tono verde para que el texto y las superficies combinen con la marca */
+  --color-slate-50: #f6faf7;
+  --color-slate-100: #eef5f0;
+  --color-slate-200: #dfe9e3;
+  --color-slate-300: #c5d4cb;
+  --color-slate-400: #8a9d93;
+  --color-slate-500: #5e6c65;
+  --color-slate-600: #4a5d54;
+  --color-slate-700: #3a4f46;
+  --color-slate-800: #2a3f37;
+  --color-slate-900: #16382d;
+
+  /* Verde de marca: acentos, "al dia", foco */
+  --color-teal-50: #e8f6ee;
+  --color-teal-100: #d3efdf;
+  --color-teal-200: #a8dfbf;
+  --color-teal-700: #087847;
+  --color-teal-800: #066239;
+
+  /* Naranja: accion principal (pagar, consultar) */
+  --color-naranja-500: #ff6816;
+  --color-naranja-600: #e85a0c;
+  /* Texto sobre naranja: tinta oscura (contraste suficiente; el blanco no llega a 3:1) */
+  --color-sobre-naranja: #16382d;
 }
 
 :root {
@@ -26,18 +52,18 @@
 html.dark {
   color-scheme: dark;
 
-  --color-white: #161d2c;
+  --color-white: #142019;
 
-  --color-slate-50: #111826;
-  --color-slate-100: #1b2435;
-  --color-slate-200: #283246;
-  --color-slate-300: #354159;
-  --color-slate-400: #5d6b82;
-  --color-slate-500: #8c99ad;
-  --color-slate-600: #aab5c5;
-  --color-slate-700: #c9d2df;
-  --color-slate-800: #e0e6ef;
-  --color-slate-900: #f2f5f9;
+  --color-slate-50: #0f1b16;
+  --color-slate-100: #15241d;
+  --color-slate-200: #1d3129;
+  --color-slate-300: #2a4138;
+  --color-slate-400: #53675d;
+  --color-slate-500: #8aa096;
+  --color-slate-600: #a8bab0;
+  --color-slate-700: #c3d3ca;
+  --color-slate-800: #dbe7e0;
+  --color-slate-900: #eef6f1;
 
   --color-rose-50: #2e121d;
   --color-rose-100: #3d1828;
@@ -45,12 +71,16 @@ html.dark {
   --color-rose-700: #fda4af;
   --color-rose-800: #ffd5dc;
 
-  --color-teal-50: #0c2a28;
-  --color-teal-100: #0f3d39;
-  --color-teal-200: #1b5c55;
-  --color-teal-700: #5fd3c2;
-  --color-teal-800: #a7ece2;
-  --color-teal-900: #d3f7f1;
+  --color-teal-50: #0c2619;
+  --color-teal-100: #113a24;
+  --color-teal-200: #1c5a38;
+  --color-teal-700: #5fdc9c;
+  --color-teal-800: #b4f2cf;
+  --color-teal-900: #dcf8e9;
+
+  --color-naranja-500: #ff8a4c;
+  --color-naranja-600: #ffa673;
+  --color-sobre-naranja: #161d2c;
 
   --color-amber-50: #2d2210;
   --color-amber-200: #6b4d15;
@@ -60,20 +90,20 @@ html.dark {
 }
 
 html.dark body {
-  background-color: #0b111c;
+  background-color: #0a1410;
   background-image:
-    radial-gradient(900px 480px at 8% -8%, #0f3a36 0%, transparent 60%),
-    radial-gradient(800px 460px at 104% 4%, #1c2544 0%, transparent 58%);
-  color: #e6ebf3;
+    radial-gradient(900px 480px at 8% -8%, #0f3a26 0%, transparent 60%),
+    radial-gradient(800px 460px at 104% 4%, #3a2110 0%, transparent 58%);
+  color: #e6efe9;
 }
 
 body {
-  background-color: #f3f6f9;
+  background-color: #ffffff;
   background-image:
-    radial-gradient(900px 480px at 8% -8%, #d8f1ec 0%, transparent 60%),
-    radial-gradient(800px 460px at 104% 4%, #e4eaf8 0%, transparent 58%);
+    radial-gradient(900px 480px at 8% -8%, #e8f6ee 0%, transparent 60%),
+    radial-gradient(800px 460px at 104% 4%, #fff6ed 0%, transparent 58%);
   background-attachment: fixed;
-  color: #1b2534;
+  color: #16382d;
   font-family: var(--font-sans);
 }
 

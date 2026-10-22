@@ -70,7 +70,7 @@ function CuentaComprador({ cuenta }: { cuenta: Cuenta }) {
             ) : (
               <Link
                 href="/pagar"
-                className="inline-flex h-14 w-full items-center justify-center rounded-2xl bg-teal-700 text-lg font-bold text-white transition hover:bg-teal-800 active:scale-[0.98]"
+                className="inline-flex h-14 w-full items-center justify-center rounded-2xl bg-naranja-500 text-lg font-bold text-sobre-naranja transition hover:bg-naranja-600 active:scale-[0.98]"
               >
                 Pagar
               </Link>

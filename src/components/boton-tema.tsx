@@ -8,6 +8,16 @@ export function BotonTema() {
 
   useEffect(() => {
     setOscuro(document.documentElement.classList.contains("dark"));
+
+    // Si el tema cambia en otra pestana, esta pestana sigue el mismo cambio.
+    function alCambiarEnOtraPestana(evento: StorageEvent) {
+      if (evento.key !== "tema") return;
+      const oscuroNuevo = evento.newValue === "oscuro";
+      document.documentElement.classList.toggle("dark", oscuroNuevo);
+      setOscuro(oscuroNuevo);
+    }
+    window.addEventListener("storage", alCambiarEnOtraPestana);
+    return () => window.removeEventListener("storage", alCambiarEnOtraPestana);
   }, []);
 
   function cambiar() {
