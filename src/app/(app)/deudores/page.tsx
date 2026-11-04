@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { resolverPago } from "@/app/acciones";
+import { ListaBuscable } from "@/components/lista-buscable";
 import { Aviso, Boton, Encabezado, Insignia, Tarjeta } from "@/components/ui";
 import { db } from "@/lib/db";
 import { fechaCorta, pesos } from "@/lib/formato";
@@ -53,19 +54,19 @@ function CuentaComprador({ cuenta }: { cuenta: Cuenta }) {
       <Encabezado titulo="Mi cuenta" />
 
       <Tarjeta className="entrar grid justify-items-center gap-6 text-center">
-        <p className="text-2xl font-extrabold text-slate-900">{cuenta.nombre}</p>
+        <p className="text-lg font-bold text-slate-600">Hola, {cuenta.nombre}</p>
 
         {debe ? (
           <>
             <div className="grid gap-1">
               <p className="text-sm font-semibold uppercase tracking-wide text-slate-600">Cantidad que debes</p>
-              <p className="text-4xl font-extrabold tracking-tight text-rose-700">{pesos(cuenta.saldo)}</p>
+              <p className="text-5xl font-extrabold tracking-tight text-rose-700">{pesos(cuenta.saldo)}</p>
             </div>
 
             {cuenta.pago_pendiente ? (
               <div className="grid w-full gap-4">
-                <Insignia tono="pendiente">Pendiente de confirmacion</Insignia>
-                <p className="text-sm text-slate-600">Ya avisaste tu pago. Yani lo revisara pronto.</p>
+                <Insignia tono="pendiente">Por confirmar</Insignia>
+                <p className="text-sm text-slate-600">Ya avisaste tu pago. Yani lo revisará pronto.</p>
               </div>
             ) : (
               <Link
@@ -79,7 +80,7 @@ function CuentaComprador({ cuenta }: { cuenta: Cuenta }) {
         ) : (
           <div className="grid justify-items-center gap-4">
             <Insignia tono="al-dia">No debes nada</Insignia>
-            <p className="text-slate-600">Estas al dia con la tienda. Gracias.</p>
+            <p className="text-slate-600">Estás al día con la tienda. Gracias.</p>
           </div>
         )}
       </Tarjeta>
@@ -102,7 +103,9 @@ async function PanelAdmin() {
     return <Aviso tono="error">No se pudieron cargar las cuentas. Intenta recargar.</Aviso>;
   }
 
-  const cuentas = (cuentasData ?? []) as Cuenta[];
+  const cuentas = ((cuentasData ?? []) as Cuenta[]).sort(
+    (a, b) => Number(b.saldo) - Number(a.saldo) || a.nombre.localeCompare(b.nombre),
+  );
   const pendientes = (pagosData ?? []) as PagoPendiente[];
   const nombres = new Map(cuentas.map((c) => [c.usuario_id, c.nombre]));
 
@@ -129,8 +132,8 @@ async function PanelAdmin() {
         texto="Cuentas de todas las personas. Confirma los pagos que te avisen."
       />
 
-      <div className="grid gap-5 sm:grid-cols-3">
-        <Tarjeta className="entrar">
+      <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
+        <Tarjeta className="entrar col-span-2 sm:col-span-1">
           <p className="text-sm font-semibold text-slate-600">Total por cobrar</p>
           <p className="mt-2 text-3xl font-extrabold tracking-tight text-rose-700">{pesos(totalDebe)}</p>
         </Tarjeta>
@@ -155,7 +158,7 @@ async function PanelAdmin() {
                     <p className="text-lg font-bold text-slate-900">{nombres.get(pago.usuario_id) ?? "Persona"}</p>
                     <p className="text-sm text-slate-600">Avisado el {fechaCorta(pago.creado_en)}</p>
                   </div>
-                  <Insignia tono="pendiente">Pendiente de confirmacion</Insignia>
+                  <Insignia tono="pendiente">Por confirmar</Insignia>
                 </div>
 
                 <p className="text-2xl font-extrabold tracking-tight text-slate-900">{pesos(pago.monto)}</p>
@@ -192,18 +195,25 @@ async function PanelAdmin() {
         <h2 className="text-xl font-bold text-slate-900">Cuentas</h2>
         {cuentas.length === 0 && (
           <Tarjeta>
-            <p className="text-slate-600">Todavia no hay compradores registrados.</p>
+            <p className="text-slate-600">Todavía no hay compradores registrados.</p>
           </Tarjeta>
         )}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {cuentas.map((cuenta) => {
-            const debe = cuenta.saldo >= MINIMO_DEBE;
-            return (
-              <Tarjeta key={cuenta.usuario_id} className="entrar grid gap-4 p-6">
+        {cuentas.length > 0 && (
+          <ListaBuscable
+            placeholder="Buscar persona"
+            vacio="No hay personas con ese nombre."
+            className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+            items={cuentas.map((cuenta) => {
+              const debe = cuenta.saldo >= MINIMO_DEBE;
+              return {
+                id: cuenta.usuario_id,
+                texto: cuenta.nombre,
+                nodo: (
+                  <Tarjeta className="entrar grid gap-4">
                 <div className="flex items-start justify-between gap-3">
                   <p className="truncate text-lg font-bold text-slate-900">{cuenta.nombre}</p>
                   {cuenta.pago_pendiente ? (
-                    <Insignia tono="pendiente">Pendiente de confirmacion</Insignia>
+                    <Insignia tono="pendiente">Por confirmar</Insignia>
                   ) : debe ? (
                     <Insignia tono="debe">Debe</Insignia>
                   ) : (
@@ -214,9 +224,11 @@ async function PanelAdmin() {
                   {pesos(Math.max(cuenta.saldo, 0))}
                 </p>
               </Tarjeta>
-            );
-          })}
-        </div>
+                ),
+              };
+            })}
+          />
+        )}
       </section>
     </div>
   );

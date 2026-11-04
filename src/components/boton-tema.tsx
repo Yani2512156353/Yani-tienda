@@ -36,9 +36,10 @@ export function BotonTema() {
       type="button"
       onClick={cambiar}
       aria-pressed={oscuro}
-      className="h-10 whitespace-nowrap rounded-full bg-slate-100 px-4 text-sm font-bold text-slate-800 transition hover:bg-slate-200 active:scale-[0.98]"
+      className="h-11 whitespace-nowrap rounded-full bg-slate-100 px-4 text-sm font-bold text-slate-800 transition hover:bg-slate-200 active:scale-[0.98]"
     >
-      {oscuro ? "Modo claro" : "Modo oscuro"}
+      <span className="dark:hidden">Modo oscuro</span>
+      <span className="hidden dark:inline">Modo claro</span>
     </button>
   );
 }

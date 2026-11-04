@@ -45,8 +45,18 @@ function leerToken(token: string | undefined): Sesion | null {
   const recibida = Buffer.from(firma);
   if (esperada.length !== recibida.length || !timingSafeEqual(esperada, recibida)) return null;
 
-  const sesion = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as Sesion;
-  if (sesion.exp < Math.floor(Date.now() / 1000)) return null;
+  let sesion: Sesion;
+  try {
+    sesion = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as Sesion;
+  } catch {
+    return null;
+  }
+  const formaValida =
+    typeof sesion?.uid === "string" &&
+    (sesion.rol === "admin" || sesion.rol === "comprador") &&
+    typeof sesion.nombre === "string" &&
+    typeof sesion.exp === "number";
+  if (!formaValida || sesion.exp < Math.floor(Date.now() / 1000)) return null;
   return sesion;
 }
 

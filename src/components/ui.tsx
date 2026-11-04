@@ -10,7 +10,7 @@ export function Tarjeta({
 }) {
   return (
     <section
-      className={`rounded-[28px] bg-white p-6 ring-1 ring-slate-900/5 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.22)] sm:p-8 ${className}`}
+      className={`rounded-3xl bg-white p-5 ring-1 ring-slate-900/5 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.22)] sm:p-8 ${className}`}
     >
       {children}
     </section>
@@ -53,7 +53,7 @@ export function Campo({ etiqueta, ayuda, id, ...resto }: CampoProps) {
       </label>
       <input
         id={idCampo}
-        className="h-12 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-teal-700 focus:bg-white focus:ring-4 focus:ring-teal-700/15"
+        className="h-12 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-teal-700 focus:bg-white focus:ring-2 focus:ring-teal-700"
         {...resto}
       />
       {ayuda && <p className="text-sm text-slate-600">{ayuda}</p>}
@@ -76,7 +76,7 @@ export function CampoArchivo({
       <input
         id={idCampo}
         type="file"
-        className="block w-full rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-600 file:mr-4 file:rounded-xl file:border-0 file:bg-slate-900 file:px-4 file:py-2.5 file:font-semibold file:text-white hover:file:bg-slate-800"
+        className="block w-full rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-600 file:mr-4 file:rounded-xl file:border-0 file:bg-slate-900 file:px-4 file:py-2.5 file:font-semibold file:text-white hover:file:bg-slate-800 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
         {...resto}
       />
       {ayuda && <p className="text-sm text-slate-600">{ayuda}</p>}
@@ -92,13 +92,18 @@ const estilosAviso: Record<TonoAviso, string> = {
   info: "bg-amber-50 text-amber-900 ring-amber-200",
 };
 
+const iconosAviso: Record<TonoAviso, string> = { error: "!", ok: "✓", info: "i" };
+
 export function Aviso({ tono, children }: { tono: TonoAviso; children: ReactNode }) {
   return (
     <p
       role={tono === "error" ? "alert" : "status"}
-      className={`rounded-2xl px-4 py-3 text-sm font-semibold ring-1 ${estilosAviso[tono]}`}
+      className={`flex items-start gap-2 rounded-2xl px-4 py-3 text-sm font-semibold ring-1 ${estilosAviso[tono]}`}
     >
-      {children}
+      <span aria-hidden="true" className="font-extrabold">
+        {iconosAviso[tono]}
+      </span>
+      <span>{children}</span>
     </p>
   );
 }
@@ -124,10 +129,17 @@ export function Boton({
     <button
       type="submit"
       disabled={disabled || pendiente}
-      className={`inline-flex h-12 items-center justify-center gap-2 whitespace-nowrap rounded-2xl px-6 text-base font-bold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${estilosBoton[tono]} ${className}`}
+      aria-busy={pendiente || undefined}
+      className={`inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-2xl px-6 text-base font-bold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${estilosBoton[tono]} ${className}`}
       {...resto}
     >
-      {pendiente ? "Espera..." : children}
+      {pendiente && (
+        <span
+          aria-hidden="true"
+          className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent motion-reduce:animate-none"
+        />
+      )}
+      {pendiente ? "Un momento..." : children}
     </button>
   );
 }
@@ -144,7 +156,7 @@ const estilosInsignia: Record<TonoInsignia, string> = {
 export function Insignia({ tono, children }: { tono: TonoInsignia; children: ReactNode }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ring-1 ${estilosInsignia[tono]}`}
+      className={`inline-flex items-center rounded-full px-3 py-1 text-[13px] font-bold ring-1 ${estilosInsignia[tono]}`}
     >
       {children}
     </span>

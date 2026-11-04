@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { FormularioLogin, FormularioRegistro } from "@/components/formularios";
+import { FormularioLogin } from "@/components/formularios";
 import { BotonTema } from "@/components/boton-tema";
 import { Tarjeta } from "@/components/ui";
 import { obtenerSesion } from "@/lib/sesion";
@@ -30,10 +30,9 @@ export default async function Inicio() {
           <FormularioLogin />
         </Tarjeta>
 
-        <Tarjeta className="bg-white/70">
-          <h2 className="mb-6 text-xl font-bold text-slate-900">Crear usuario</h2>
-          <FormularioRegistro />
-        </Tarjeta>
+        <p className="px-2 text-sm text-slate-600">
+          ¿Aún no tienes usuario? Pídeselo a Yani.
+        </p>
       </div>
     </div>
   );

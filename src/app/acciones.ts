@@ -34,8 +34,22 @@ function nombreLimpio(valor: FormDataEntryValue | null): string {
   return String(valor ?? "").trim().replace(/\s+/g, " ");
 }
 
+// Sin espacios y en minusculas: "Maria Acosta" y "mariaacosta" entran a la misma cuenta.
 function claveDeNombre(nombre: string): string {
-  return nombre.toLowerCase();
+  return nombre.replace(/\s+/g, "").toLowerCase();
+}
+
+// Los errores internos van al log del servidor; a la persona se le muestra un texto generico.
+function errorGenerico(contexto: string, error: { message: string }, mensaje: string): { error: string } {
+  console.error(`[${contexto}]`, error.message);
+  return { error: mensaje };
+}
+
+// Los "raise exception" de nuestras funciones SQL (codigo P0001) se muestran tal cual;
+// cualquier otro error es interno y se oculta.
+function mensajeDeFuncion(contexto: string, error: { code?: string; message: string }): { error: string } {
+  if (error.code === "P0001") return { error: error.message };
+  return errorGenerico(contexto, error, "No se pudo completar la accion. Intenta de nuevo");
 }
 
 function validarImagen(archivo: File): string | null {
@@ -55,6 +69,8 @@ async function subirArchivo(bucket: string, ruta: string, archivo: File): Promis
 // Cuenta: crear usuario, entrar y salir
 // ---------------------------------------------------------------------
 export async function crearUsuario(_prev: Estado, formData: FormData): Promise<Estado> {
+  // Solo Yani crea cuentas: no hay registro abierto.
+  await exigirSesion("admin");
   const nombre = nombreLimpio(formData.get("nombre"));
   if (nombre.length < 2 || nombre.length > 40) {
     return { error: "El nombre debe tener entre 2 y 40 caracteres" };
@@ -68,9 +84,29 @@ export async function crearUsuario(_prev: Estado, formData: FormData): Promise<E
 
   if (error) {
     if (error.code === "23505") return { error: "Ese nombre ya existe, usa otro o inicia sesion" };
-    // Se muestra el error real de Supabase para diagnosticar la configuracion.
-    return { error: `No se pudo crear el usuario. Supabase dice: ${error.message}` };
+    return errorGenerico("crearUsuario", error, "No se pudo crear el usuario. Intenta de nuevo");
   }
+  revalidatePath("/usuarios");
+  return { ok: true };
+}
+
+// Devuelve a un comprador a la clave inicial; debera cambiarla al entrar.
+export async function restablecerClave(_prev: Estado, formData: FormData): Promise<Estado> {
+  await exigirSesion("admin");
+  const id = String(formData.get("usuario") ?? "");
+  if (!id) return { error: "Falta la persona" };
+
+  const hash = await bcrypt.hash(CLAVE_INICIAL, 10);
+  const { data, error } = await db()
+    .from("usuarios")
+    .update({ clave_hash: hash, debe_cambiar_clave: true })
+    .eq("id", id)
+    .eq("rol", "comprador")
+    .select("id");
+  if (error) return errorGenerico("restablecerClave", error, "No se pudo restablecer la clave");
+  if (!data?.length) return { error: "No se encontró a esa persona" };
+
+  revalidatePath("/usuarios");
   return { ok: true };
 }
 
@@ -85,8 +121,8 @@ export async function iniciarSesionAccion(_prev: Estado, formData: FormData): Pr
     .eq("nombre_clave", claveDeNombre(nombre))
     .maybeSingle();
 
-  // Un error de consulta no es una clave incorrecta: se muestra para diagnosticar la conexion.
-  if (error) return { error: `No se pudo consultar la base. Supabase dice: ${error.message}` };
+  // Un error de consulta no es una clave incorrecta.
+  if (error) return errorGenerico("iniciarSesion", error, "No pudimos entrar ahora. Intenta de nuevo en un momento");
 
   // Mismo mensaje si no existe o si la clave falla: no revelamos que nombres existen.
   if (!usuario || !(await bcrypt.compare(clave, usuario.clave_hash))) {
@@ -116,7 +152,7 @@ export async function cambiarClave(_prev: Estado, formData: FormData): Promise<E
     .from("usuarios")
     .update({ clave_hash: hash, debe_cambiar_clave: false })
     .eq("id", sesion.uid);
-  if (error) return { error: `No se pudo guardar la clave. Supabase dice: ${error.message}` };
+  if (error) return errorGenerico("cambiarClave", error, "No se pudo guardar la clave. Intenta de nuevo");
 
   // Se reemite la sesion sin el aviso de cambio pendiente.
   await iniciarSesion({ uid: sesion.uid, rol: sesion.rol, nombre: sesion.nombre, cambiar: false });
@@ -149,10 +185,15 @@ export async function guardarProducto(_prev: Estado, formData: FormData): Promis
     return { error: "Las unidades por paquete deben ser un entero entre 1 y 1000" };
   }
 
+  // Al editar, el stock solo se escribe si la persona lo cambio, y solo si nadie lo movio
+  // mientras tanto (compras o agregado rapido). Asi no se pisan ventas recientes.
+  const stockOriginal = Number(formData.get("stock_original"));
+  const cambioStock = !id || stock !== stockOriginal;
+
   const datos: Record<string, unknown> = {
     nombre,
     precio,
-    stock,
+    ...(cambioStock ? { stock } : {}),
     agregado_rapido: agregadoRapido,
     unidades_por_paquete: unidades,
     actualizado_en: new Date().toISOString(),
@@ -172,11 +213,18 @@ export async function guardarProducto(_prev: Estado, formData: FormData): Promis
     datos.imagen_url = db().storage.from("productos").getPublicUrl(ruta).data.publicUrl;
   }
 
-  const consulta = id
-    ? db().from("productos").update(datos).eq("id", id)
-    : db().from("productos").insert(datos);
-  const { error } = await consulta;
-  if (error) return { error: "No se pudo guardar el producto" };
+  if (id) {
+    let consulta = db().from("productos").update(datos).eq("id", id);
+    if (cambioStock) consulta = consulta.eq("stock", stockOriginal);
+    const { data: filas, error } = await consulta.select("id");
+    if (error) return { error: "No se pudo guardar el producto" };
+    if (!filas?.length) {
+      return { error: "El stock cambió mientras editabas (hubo una compra). Recarga la página e inténtalo de nuevo" };
+    }
+  } else {
+    const { error } = await db().from("productos").insert(datos);
+    if (error) return { error: "No se pudo guardar el producto" };
+  }
 
   revalidatePath("/tienda");
   return { ok: true };
@@ -210,7 +258,7 @@ export async function comprarProducto(_prev: Estado, formData: FormData): Promis
     p_producto: producto,
     p_cantidad: cantidad,
   });
-  if (error) return { error: error.message };
+  if (error) return mensajeDeFuncion("comprarProducto", error);
 
   revalidatePath("/tienda");
   revalidatePath("/deudores");
@@ -240,7 +288,7 @@ export async function avisarPago(_prev: Estado, formData: FormData): Promise<Est
   if (error) {
     // Si el aviso no se creo, el comprobante subido no sirve: se borra.
     if (ruta) await db().storage.from("comprobantes").remove([ruta]);
-    return { error: error.message };
+    return mensajeDeFuncion("avisarPago", error);
   }
 
   revalidatePath("/deudores");
