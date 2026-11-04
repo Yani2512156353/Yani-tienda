@@ -1,4 +1,6 @@
 // Piezas visuales sin estado. Pueden usarse desde Server y Client Components.
+// Excepcion: Campo y CampoArchivo usan useId, asi que solo se renderizan desde formularios (cliente).
+import { useId } from "react";
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
 
 export function Tarjeta({
@@ -45,7 +47,9 @@ type CampoProps = InputHTMLAttributes<HTMLInputElement> & {
 };
 
 export function Campo({ etiqueta, ayuda, id, ...resto }: CampoProps) {
-  const idCampo = id ?? resto.name ?? undefined;
+  // Dos campos con el mismo name (p. ej. "nombre" en dos formularios) no deben compartir id.
+  const generado = useId();
+  const idCampo = id ?? `${generado}-${resto.name ?? "campo"}`;
   return (
     <div className="grid gap-2">
       <label htmlFor={idCampo} className="text-sm font-semibold text-slate-700">
@@ -67,7 +71,9 @@ export function CampoArchivo({
   id,
   ...resto
 }: InputHTMLAttributes<HTMLInputElement> & { etiqueta: string; ayuda?: string }) {
-  const idCampo = id ?? resto.name ?? undefined;
+  // Dos campos con el mismo name (p. ej. "nombre" en dos formularios) no deben compartir id.
+  const generado = useId();
+  const idCampo = id ?? `${generado}-${resto.name ?? "campo"}`;
   return (
     <div className="grid gap-2">
       <label htmlFor={idCampo} className="text-sm font-semibold text-slate-700">

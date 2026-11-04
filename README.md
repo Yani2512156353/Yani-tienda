@@ -16,7 +16,9 @@ Next.js (App Router) + Supabase (Postgres y Storage) + Vercel.
 4. Poner el QR de pago en `public/qr-pago.png`.
 5. `npm install` y `npm run dev`.
 
-Usuario inicial: **Yani**, clave **1234**. Los usuarios nuevos se crean desde la portada con clave 1234.
+Usuario inicial: **Yani**. Su clave inicial se entrega en privado, no va en este repositorio. Al primer ingreso se pide cambiarla.
+
+Los usuarios nuevos los crea Yani desde la pagina **Usuarios**, con una clave inicial que tambien se entrega en privado.
 
 ## Seguridad
 
