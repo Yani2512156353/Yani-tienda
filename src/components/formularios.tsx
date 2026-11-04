@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useId, useRef } from "react";
+import { useActionState, useEffect, useId, useRef, useState } from "react";
 import {
   avisarPago,
   cambiarClave,
@@ -8,9 +8,11 @@ import {
   crearUsuario,
   guardarProducto,
   iniciarSesionAccion,
+  restablecerClave,
   type Estado,
 } from "@/app/acciones";
 import { Aviso, Boton, Campo, CampoArchivo } from "@/components/ui";
+import { pesos } from "@/lib/formato";
 
 export function FormularioLogin() {
   const [estado, accion, pendiente] = useActionState(iniciarSesionAccion, undefined as Estado);
@@ -27,7 +29,6 @@ export function FormularioLogin() {
         etiqueta="Tu clave"
         name="clave"
         type="password"
-        inputMode="numeric"
         autoComplete="current-password"
         required
       />
@@ -41,20 +42,24 @@ export function FormularioLogin() {
 
 export function FormularioRegistro() {
   const [estado, accion, pendiente] = useActionState(crearUsuario, undefined as Estado);
+  const formRef = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    if (estado?.ok) formRef.current?.reset();
+  }, [estado]);
   return (
-    <form action={accion} className="grid gap-5">
+    <form ref={formRef} action={accion} className="grid gap-5">
       <Campo
         etiqueta="Nombre de la persona"
         name="nombre"
         maxLength={40}
-        ayuda="Tu clave inicial es 1234. El nombre no se puede repetir."
+        ayuda="La clave inicial es 1234; la persona debe cambiarla al entrar. El nombre no se puede repetir."
         required
       />
       {estado?.error && <Aviso tono="error">{estado.error}</Aviso>}
       {estado?.ok && (
-        <Aviso tono="ok">Usuario creado. Ya puedes entrar con tu nombre y la clave 1234.</Aviso>
+        <Aviso tono="ok">Usuario creado. Dile que entre con su nombre y la clave 1234.</Aviso>
       )}
-      <Boton tono="suave" pendiente={pendiente} className="w-full">
+      <Boton tono="principal" pendiente={pendiente} className="w-full">
         Crear usuario
       </Boton>
     </form>
@@ -85,6 +90,7 @@ export function FormularioProducto({ producto }: { producto?: ProductoEditable }
   return (
     <form ref={formRef} action={accion} className="grid gap-5 sm:grid-cols-2">
       {producto && <input type="hidden" name="id" value={producto.id} />}
+      {producto && <input type="hidden" name="stock_original" value={producto.stock} />}
       <div className="sm:col-span-2">
         <Campo
           id={`${uid}-nombre`}
@@ -123,7 +129,7 @@ export function FormularioProducto({ producto }: { producto?: ProductoEditable }
             defaultChecked={producto?.agregado_rapido ?? false}
             className="h-5 w-5 accent-teal-700"
           />
-          Habilitar agregado rapido
+          Habilitar agregado rápido
         </label>
         <Campo
           id={`${uid}-unidades`}
@@ -134,7 +140,7 @@ export function FormularioProducto({ producto }: { producto?: ProductoEditable }
           max="1000"
           step="1"
           defaultValue={producto?.unidades_por_paquete ?? 12}
-          ayuda="Cuanto suma cada pulsacion del boton de agregado rapido."
+          ayuda="Cuánto suma cada pulsación del botón de agregado rápido."
         />
       </div>
       <div className="sm:col-span-2">
@@ -172,33 +178,71 @@ export function FormularioProducto({ producto }: { producto?: ProductoEditable }
 export function FormularioCompra({
   productoId,
   stock,
+  precio,
 }: {
   productoId: string;
   stock: number;
+  precio: number;
 }) {
   const [estado, accion, pendiente] = useActionState(comprarProducto, undefined as Estado);
+  const [cantidad, setCantidad] = useState(1);
+  const uid = useId();
+
+  // Tras comprar, la cantidad vuelve a 1 (y no puede pasar del stock que queda).
+  useEffect(() => {
+    if (estado?.ok) setCantidad(1);
+  }, [estado]);
+
+  const ajustar = (valor: number) => setCantidad(Math.min(Math.max(1, valor || 1), stock));
+  const botonPaso =
+    "grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-slate-100 text-xl font-bold text-slate-800 transition hover:bg-slate-200 active:scale-[0.98] disabled:opacity-40";
+
   return (
     <form action={accion} className="grid gap-3">
       <input type="hidden" name="producto" value={productoId} />
-      <div className="flex items-end gap-3">
-        <label className="grid flex-1 gap-2">
-          <span className="text-sm font-semibold text-slate-700">Cantidad</span>
-          <input
-            name="cantidad"
-            type="number"
-            min={1}
-            max={stock}
-            defaultValue={1}
-            required
-            className="h-12 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base text-slate-900 outline-none focus:border-teal-700 focus:bg-white focus:ring-4 focus:ring-teal-700/15"
-          />
-        </label>
-        <Boton tono="exito" pendiente={pendiente} className="flex-1">
-          Comprar
-        </Boton>
+      <label htmlFor={`${uid}-cantidad`} className="text-sm font-semibold text-slate-700">
+        Cantidad
+      </label>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          aria-label="Quitar una unidad"
+          disabled={cantidad <= 1}
+          onClick={() => ajustar(cantidad - 1)}
+          className={botonPaso}
+        >
+          −
+        </button>
+        <input
+          id={`${uid}-cantidad`}
+          name="cantidad"
+          type="number"
+          inputMode="numeric"
+          min={1}
+          max={stock}
+          value={cantidad}
+          onChange={(e) => ajustar(Number(e.target.value))}
+          required
+          className="h-12 w-full min-w-0 rounded-2xl border border-slate-200 bg-slate-50 px-2 text-center text-base text-slate-900 outline-none focus:border-teal-700 focus:bg-white focus:ring-2 focus:ring-teal-700"
+        />
+        <button
+          type="button"
+          aria-label="Agregar una unidad"
+          disabled={cantidad >= stock}
+          onClick={() => ajustar(cantidad + 1)}
+          className={botonPaso}
+        >
+          +
+        </button>
       </div>
+      <p aria-live="polite" className="text-sm font-semibold text-slate-600">
+        Total: <span className="font-extrabold text-slate-900">{pesos(precio * cantidad)}</span>
+      </p>
+      <Boton tono="exito" pendiente={pendiente} className="w-full">
+        Comprar
+      </Boton>
       {estado?.error && <Aviso tono="error">{estado.error}</Aviso>}
-      {estado?.ok && <Aviso tono="ok">Compra registrada. Se sumo a tu cuenta.</Aviso>}
+      {estado?.ok && <Aviso tono="ok">Compra registrada. Se sumó a tu cuenta.</Aviso>}
     </form>
   );
 }
@@ -249,6 +293,26 @@ export function FormularioClave({ obligatorio }: { obligatorio: boolean }) {
       <Boton tono="exito" pendiente={pendiente} className="w-full">
         {obligatorio ? "Guardar mi clave" : "Cambiar clave"}
       </Boton>
+    </form>
+  );
+}
+
+export function BotonRestablecer({ usuarioId, nombre }: { usuarioId: string; nombre: string }) {
+  const [estado, accion, pendiente] = useActionState(restablecerClave, undefined as Estado);
+  return (
+    <form
+      action={accion}
+      className="grid gap-2"
+      onSubmit={(e) => {
+        if (!window.confirm(`¿Restablecer la clave de ${nombre} a 1234?`)) e.preventDefault();
+      }}
+    >
+      <input type="hidden" name="usuario" value={usuarioId} />
+      <Boton tono="suave" pendiente={pendiente} className="w-full">
+        Restablecer clave
+      </Boton>
+      {estado?.error && <Aviso tono="error">{estado.error}</Aviso>}
+      {estado?.ok && <Aviso tono="ok">Listo: ahora su clave es 1234.</Aviso>}
     </form>
   );
 }

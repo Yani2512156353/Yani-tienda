@@ -29,6 +29,9 @@ export default async function PaginaPagar() {
   return (
     <div className="mx-auto grid max-w-md gap-6">
       <Encabezado titulo="Pagar" />
+      <Link href="/deudores" className="w-fit text-sm font-bold text-teal-800 underline-offset-4 hover:underline">
+        ← Volver a mi cuenta
+      </Link>
 
       {!debe && (
         <Tarjeta className="entrar grid justify-items-start gap-4">
@@ -43,18 +46,18 @@ export default async function PaginaPagar() {
         <Tarjeta className="entrar grid justify-items-center gap-6 text-center">
           <div className="grid gap-1">
             <p className="text-sm font-semibold uppercase tracking-wide text-slate-600">Total a pagar</p>
-            <p className="text-4xl font-extrabold tracking-tight text-rose-700">{pesos(saldo)}</p>
+            <p className="text-5xl font-extrabold tracking-tight text-rose-700">{pesos(saldo)}</p>
           </div>
 
           <QrPago />
 
           <p className="text-sm leading-relaxed text-slate-600">
-            Escanea el codigo con tu app de pagos. Cuando termines, avisa aqui para que Yani lo confirme.
+            1. Escanea el código con tu app de pagos. 2. Paga el total. 3. Avisa aquí para que Yani lo confirme.
           </p>
 
           {data.pago_pendiente ? (
             <div className="grid w-full gap-4">
-              <Aviso tono="info">Ya avisaste tu pago. Espera la confirmacion de Yani.</Aviso>
+              <Aviso tono="info">Ya avisaste tu pago. Espera la confirmación de Yani.</Aviso>
               <Link href="/deudores" className="font-bold text-teal-800 underline-offset-4 hover:underline">
                 Volver a mi cuenta
               </Link>

@@ -89,6 +89,12 @@ html.dark {
   --color-amber-900: #fff1cf;
 }
 
+/* Foco visible para quien navega con teclado. */
+:focus-visible {
+  outline: 3px solid var(--color-teal-700);
+  outline-offset: 2px;
+}
+
 html.dark body {
   background-color: #0a1410;
   background-image:
@@ -102,7 +108,8 @@ body {
   background-image:
     radial-gradient(900px 480px at 8% -8%, #e8f6ee 0%, transparent 60%),
     radial-gradient(800px 460px at 104% 4%, #fff6ed 0%, transparent 58%);
-  background-attachment: fixed;
+  background-repeat: no-repeat;
+  min-height: 100dvh;
   color: #16382d;
   font-family: var(--font-sans);
 }
