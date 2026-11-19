@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 // Sesion firmada en una cookie httpOnly. No hay estado en el servidor:
 // el token trae uid, rol y vencimiento, y la firma impide alterarlo.
 const COOKIE = "tienda_sesion";
-const DURACION_SEGUNDOS = 60 * 60 * 24 * 7; // 7 dias
+const DURACION_SEGUNDOS = 60 * 60 * 24 * 30; // 30 dias: la sesion solo se cierra con "Salir" o al vencer
 
 export type Rol = "admin" | "comprador";
 
