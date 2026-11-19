@@ -24,6 +24,7 @@ export default async function PaginaTienda() {
   let consulta = db()
     .from("productos")
     .select("id, nombre, precio, stock, imagen_url, agregado_rapido, unidades_por_paquete")
+    .eq("archivado", false)
     .order("creado_en", { ascending: false });
 
   // Regla de negocio: el comprador solo ve productos con stock. Al llegar a 0 desaparecen.
